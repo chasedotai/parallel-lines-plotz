@@ -8,6 +8,7 @@ class ParallelLinesEditor {
         this.isDragging = false;
         this.selectedPoint = null;
         this.dragStartY = 0;
+        this.numControlPoints = 5;
 
         this.setupCanvas();
         this.initializeControlPoints();
@@ -21,12 +22,11 @@ class ParallelLinesEditor {
 
     initializeControlPoints() {
         this.controlPoints = [];
-        const numPoints = 5; // Number of control points per line
-        const step = this.canvas.width / (numPoints - 1);
+        const step = this.canvas.width / (this.numControlPoints - 1);
         
         for (let i = 0; i < this.numLines; i++) {
             const points = [];
-            for (let j = 0; j < numPoints; j++) {
+            for (let j = 0; j < this.numControlPoints; j++) {
                 points.push({
                     x: j * step,
                     y: this.canvas.height / 2
@@ -49,6 +49,12 @@ class ParallelLinesEditor {
 
         document.getElementById('spacing').addEventListener('change', (e) => {
             this.spacing = parseInt(e.target.value);
+            this.draw();
+        });
+
+        document.getElementById('controlPoints').addEventListener('change', (e) => {
+            this.numControlPoints = parseInt(e.target.value);
+            this.initializeControlPoints();
             this.draw();
         });
 
