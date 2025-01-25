@@ -13,11 +13,34 @@ class ParallelLinesEditor {
         this.setupCanvas();
         this.initializeControlPoints();
         this.addEventListeners();
+        this.handleResize = this.handleResize.bind(this);
+        window.addEventListener('resize', this.handleResize);
     }
 
     setupCanvas() {
-        this.canvas.width = 800;
-        this.canvas.height = 600;
+        const container = this.canvas.parentElement;
+        this.canvas.width = container.clientWidth - 40; // Account for padding
+        this.canvas.height = Math.min(window.innerHeight * 0.6, 600);
+    }
+
+    handleResize() {
+        const oldWidth = this.canvas.width;
+        const oldHeight = this.canvas.height;
+        
+        this.setupCanvas();
+        
+        // Scale all points to new dimensions
+        const scaleX = this.canvas.width / oldWidth;
+        const scaleY = this.canvas.height / oldHeight;
+        
+        this.controlPoints.forEach(line => {
+            line.forEach(point => {
+                point.x *= scaleX;
+                point.y *= scaleY;
+            });
+        });
+        
+        this.draw();
     }
 
     initializeControlPoints() {
@@ -59,6 +82,11 @@ class ParallelLinesEditor {
         });
 
         document.getElementById('downloadSvg').addEventListener('click', this.downloadSVG.bind(this));
+
+        // Add touch events
+        this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this));
+        this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this));
+        this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
     }
 
     handleMouseDown(e) {
@@ -174,6 +202,47 @@ class ParallelLinesEditor {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    handleTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = this.canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        // Scale coordinates based on canvas size
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        
+        this.handleMouseDown({
+            clientX: x * scaleX,
+            clientY: y * scaleY
+        });
+    }
+
+    handleTouchMove(e) {
+        e.preventDefault();
+        if (!this.isDragging) return;
+        
+        const touch = e.touches[0];
+        const rect = this.canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        // Scale coordinates
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        
+        this.handleMouseMove({
+            clientX: x * scaleX,
+            clientY: y * scaleY
+        });
+    }
+
+    handleTouchEnd(e) {
+        e.preventDefault();
+        this.handleMouseUp();
     }
 }
 
